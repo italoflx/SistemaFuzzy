@@ -1,0 +1,53 @@
+/*
+	Example: A tip calculation FIS (fuzzy inference system)
+	Calculates tip based on 'size' and 'color'
+*/
+
+FUNCTION_BLOCK tipper	// Block definition (there may be more than one block per file)
+
+VAR_INPUT				// Define input variables
+	color : REAL;
+	size : REAL;
+END_VAR
+
+VAR_OUTPUT				// Define output variable
+	tip : REAL;
+END_VAR
+
+FUZZIFY color			// Fuzzify input variable 'color': {'pink', 'light red' , 'red'}
+	TERM pink := (0, 1) (1.9, 1) (4.5, 0); 
+	TERM lightRed := (2.5, 0) (5, 1) (7.5, 0);
+	TERM red := (5.5, 0) (9, 1) (10, 1);
+END_FUZZIFY
+
+FUZZIFY size			// Fuzzify input variable 'size': { 'p', 'm', 'g' }
+	TERM p := (0, 1) (17.9, 1) (28, 0);
+	TERM m := (18, 0) (40, 1) (70, 0);
+	TERM g := (55, 0) (70, 1) (100, 1);
+END_FUZZIFY
+
+DEFUZZIFY tip			// Defuzzify output variable 'tip' : {'saudavel', 'poucoDoente', 'doente' }
+	TERM saudavel := (0, 0) (1.5, 1) (2.9, 0);
+	TERM poucoDoente := (3, 0) (5, 1) (7, 0);
+	TERM doente := (6, 0) (8.5, 1) (10, 0);
+	METHOD : COG;		// Use 'Center Of Gravity' defuzzification method
+	DEFAULT := 0;		// Default value is 0 (if no rule activates defuzzifier)
+END_DEFUZZIFY
+
+RULEBLOCK No1
+	AND : MIN;			// Use 'min' for 'and' 					// (also implicit use 'max' for 'or' to fulfill DeMorgan's Law)
+	ACT : MIN;			// Use 'min' activation method
+	ACCU : MAX;			// Use 'max' accumulation method
+
+	RULE 1 : IF size IS p AND color IS pink THEN tip IS saudavel;
+	RULE 2 : IF size IS p AND color IS lightRed THEN tip IS saudavel;
+	RULE 3 : IF size IS p AND color IS red THEN tip IS saudavel;
+	RULE 4 : IF size IS m AND color IS pink THEN tip IS saudavel; 
+	RULE 5 : IF size IS m AND color IS lightRed THEN tip IS poucoDoente;
+	RULE 6 : IF size IS m AND color IS red THEN tip IS doente;
+	RULE 7 : IF size IS g AND color IS pink THEN tip IS poucoDoente;
+	RULE 8 : IF size IS g AND color IS lightRed THEN tip IS doente;
+	RULE 9 : IF size IS g AND color IS red THEN tip IS doente;
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
